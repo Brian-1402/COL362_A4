@@ -66,6 +66,8 @@ public class PFilter extends Filter implements PRel {
         }
         Object a = operands.get(0);
         Object b = operands.get(1);
+        // print the types of a and b
+        // logger.trace("Type of a: " + a.getClass().getName());
         // Evaluate the call
         // considers different datatypes too, such as integers, float, etc.
         // Assumes both operands are of the same type
@@ -105,7 +107,7 @@ public class PFilter extends Filter implements PRel {
                 } else if (a instanceof Long) {
                     return ((Number) a).longValue() * ((Number) b).longValue();
                 } else {
-                    return null;
+                    throw new RuntimeException("Unsupported type" + a.getClass().getName() + " for TIMES operation");
                 }
             case DIVIDE:
                 if (a instanceof Integer) {
@@ -147,6 +149,7 @@ public class PFilter extends Filter implements PRel {
         // Evaluate the call
         switch (call.getKind()) {
             case EQUALS:
+            case IS_NOT_DISTINCT_FROM:
                 return a.equals(b);
             case GREATER_THAN:
                 return ((Number) a).doubleValue() > ((Number) b).doubleValue();
@@ -157,25 +160,19 @@ public class PFilter extends Filter implements PRel {
             case OR:
                 return (Boolean) a || (Boolean) b;
             case NOT:
+            case IS_FALSE:
+            case IS_NOT_TRUE:
                 return !(Boolean) a;
             case IS_NULL:
+            case IS_UNKNOWN:
                 return a == null;
             case IS_NOT_NULL:
                 return a != null;
             case IS_TRUE:
-                return (Boolean) a;
-            case IS_FALSE:
-                return !(Boolean) a;
-            case IS_NOT_TRUE:
-                return !(Boolean) a;
             case IS_NOT_FALSE:
                 return (Boolean) a;
-            case IS_UNKNOWN:
-                return a == null;
             case IS_DISTINCT_FROM:
                 return !a.equals(b);
-            case IS_NOT_DISTINCT_FROM:
-                return a.equals(b);
             default:
                 return false;
         }
@@ -212,7 +209,7 @@ public class PFilter extends Filter implements PRel {
         logger.trace("Checking if PFilter has next");
         /* Write your code here */
         if (this.input instanceof PRel) {
-            for (Object[] row = ((PRel) this.input).next(); row != null; row = ((PRel) this.input).next()) {
+            for (Object[] row = ((PRel) this.input).next(); ((PRel) this.input).hasNext(); row = ((PRel) this.input).next()) {
                 // Evaluate the condition
                 Object result = evalRexNode(condition, row);
                 // Check the result

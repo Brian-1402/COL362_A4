@@ -14,6 +14,7 @@ import org.apache.calcite.sql.SqlKind;
 
 import convention.PConvention;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,6 +72,7 @@ public class PProject extends Project implements PRel {
         }
         Object a = operands.get(0);
         Object b = operands.get(1);
+        // System.out.println("type of a" + a.getClass().getName());
         // Evaluate the call
         // considers different datatypes too, such as integers, float, etc.
         // Assumes both operands are of the same type
@@ -101,7 +103,10 @@ public class PProject extends Project implements PRel {
                     return null;
                 }
             case TIMES:
-                if (a instanceof Integer) {
+                if (a instanceof BigDecimal) {
+                    // return ((BigDecimal) a).multiply((BigDecimal) b);
+                    return ((Number) a).doubleValue() * ((Number) b).doubleValue();
+                } else if (a instanceof Integer) {
                     return ((Number) a).intValue() * ((Number) b).intValue();
                 } else if (a instanceof Double) {
                     return ((Number) a).doubleValue() * ((Number) b).doubleValue();
@@ -110,7 +115,8 @@ public class PProject extends Project implements PRel {
                 } else if (a instanceof Long) {
                     return ((Number) a).longValue() * ((Number) b).longValue();
                 } else {
-                    return null;
+                    throw new RuntimeException("Unsupported type" + a.getClass().getName() + " for TIMES operation");
+                    // return null;
                 }
             case DIVIDE:
                 if (a instanceof Integer) {
