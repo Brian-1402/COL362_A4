@@ -14,7 +14,6 @@ import org.apache.calcite.sql.SqlKind;
 import convention.PConvention;
 
 import java.math.BigDecimal;
-// import java.math.BigDecimal;
 import java.util.List;
 import org.apache.calcite.rex.RexLiteral;
 
@@ -73,7 +72,7 @@ public class PProject extends Project implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
-        String operandType = type;
+        String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
     
         switch (call.getKind()) {
             case AND:
@@ -99,8 +98,8 @@ public class PProject extends Project implements PRel {
     private boolean compareOperands(SqlKind kind, String operandType, Object operand1, Object operand2) {
         // If operandType is BIGDECIMAL then convert it to DOUBLE
         if (operandType.equals("DECIMAL")) {
-            operand1 = ((BigDecimal) operand1).doubleValue();
-            operand2 = ((BigDecimal) operand2).doubleValue();
+            operand1 = ((Number) operand1).doubleValue();
+            operand2 = ((Number) operand2).doubleValue();
             operandType = "DOUBLE";
         }
 
@@ -139,7 +138,7 @@ public class PProject extends Project implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
-        String operandType = type;
+        String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
 
         switch (call.getKind()) {
             case PLUS:
@@ -273,21 +272,10 @@ public class PProject extends Project implements PRel {
             return inputRow[((RexInputRef) expr).getIndex()];
         }
         else if (expr instanceof RexLiteral){
-            if (type.equals("INTEGER")) {
-                return ((RexLiteral) expr).getValueAs(Integer.class);
-            } else if (type.equals("FLOAT")) {
-                return ((RexLiteral) expr).getValueAs(Float.class);
-            } else if (type.equals("DOUBLE")) {
-                return ((RexLiteral) expr).getValueAs(Double.class);
-            } else if (type.equals("VARCHAR")) {
-                return ((RexLiteral) expr).getValueAs(String.class);
-            } else if (type.equals("BOOLEAN")) {
-                return ((RexLiteral) expr).getValueAs(Boolean.class);
-            } else if (type.equals("DECIMAL")) {
+            if (type.equals("DECIMAL")) {
                 return ((RexLiteral) expr).getValueAs(BigDecimal.class); // returns a BigDecimal
-            } else {
-                throw new UnsupportedOperationException("Unsupported data type in PProject.handleExpression");
             }
+            return ((RexLiteral) expr).getValue(); // returns a String
         }
         else {
             throw new UnsupportedOperationException("Unsupported expression type in PProject.handleExpression");

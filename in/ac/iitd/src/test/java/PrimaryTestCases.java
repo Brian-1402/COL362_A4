@@ -56,7 +56,8 @@ public class PrimaryTestCases {
     public void testSFW() {
         try{
             MyCalciteConnection calciteConnection = new MyCalciteConnection();
-            String query = "select actor_id, (2*actor_id + 5) from actor";
+//            String query = "select first_name from actor where actor_id > 100 and actor_id < 150";
+             String query = "select actor_id, 2.5*actor_id + 5 from actor where actor_id > 100 and actor_id < 150";
             
             RelNode relNode = createRelNode(query, calciteConnection);
             List<Object []> result = eval(relNode, calciteConnection);
