@@ -61,6 +61,18 @@ public class PrimaryTestCases {
             RelNode relNode = createRelNode(query, calciteConnection);
             List<Object []> result = eval(relNode, calciteConnection);
 
+            if(result == null) {
+                System.out.println("[-] No result found");
+            }
+            else{
+                System.out.println("[+] Final Output : ");
+                for (Object [] row : result) {
+                    for (Object col : row) {
+                        System.out.print(col + " ");
+                    }
+                    System.out.println();
+                }
+            }
             assert(result.size() == 49);
             for(Object [] row : result){
                 assert(row.length == 1);
@@ -126,18 +138,7 @@ public class PrimaryTestCases {
 
             // Tip: You can use the following code to print the result and debug
 
-            // if(result == null) {
-            //     System.out.println("[-] No result found");
-            // }
-            // else{
-            //     System.out.println("[+] Final Output : ");
-            //     for (Object [] row : result) {
-            //         for (Object col : row) {
-            //             System.out.print(col + " ");
-            //         }
-            //         System.out.println();
-            //     }
-            // }
+
 
             calciteConnection.close();
         }
