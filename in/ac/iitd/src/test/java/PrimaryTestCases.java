@@ -56,11 +56,12 @@ public class PrimaryTestCases {
     public void testSFW() {
         try{
             MyCalciteConnection calciteConnection = new MyCalciteConnection();
-            // String query = "select first_name from actor where actor_id > 100.5 and actor_id < 150";
             String query = "select actor_id, (2*actor_id + 5) from actor";
-
+            
             RelNode relNode = createRelNode(query, calciteConnection);
             List<Object []> result = eval(relNode, calciteConnection);
+
+            // Tip: You can use the following code to print the result and debug
 
             if(result == null) {
                 System.out.println("[-] No result found");
@@ -74,6 +75,7 @@ public class PrimaryTestCases {
                     System.out.println();
                 }
             }
+
             assert(result.size() == 49);
             for(Object [] row : result){
                 assert(row.length == 1);
@@ -136,10 +138,6 @@ public class PrimaryTestCases {
             for(int i = 0; i < result.size(); i++){
                 assert(result.get(i)[0].equals(expected[i]));
             }
-
-            // Tip: You can use the following code to print the result and debug
-
-
 
             calciteConnection.close();
         }

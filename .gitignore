@@ -33,4 +33,5 @@ out/
 
 in/ac/iitd/src/test/java/MyTest.java
 
-bin/
+# config files
+*.code-workspace
