@@ -57,7 +57,8 @@ public class PrimaryTestCases {
         try{
             MyCalciteConnection calciteConnection = new MyCalciteConnection();
             // String query = "select first_name from actor where actor_id > 100.5 and actor_id < 150";
-            String query = "select actor_id, (2*actor_id + 5) from actor";
+//            String query = "select actor_id from actor";
+            String query = "select * from actor order by first_name DESC LIMIT 5";
 
             RelNode relNode = createRelNode(query, calciteConnection);
             List<Object []> result = eval(relNode, calciteConnection);

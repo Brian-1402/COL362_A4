@@ -42,25 +42,27 @@ public class PSort extends Sort implements PRel{
         return "PSort";
     }
     private List<Object[]> sortedData = new ArrayList<>();
-    private int int_offset = (Integer) ((RexLiteral) this.offset).getValue();
-    private int int_fetch = (Integer) ((RexLiteral) this.fetch).getValue();
+    private int int_offset = 0;
+    private int int_fetch = 0;
+
 
     // returns true if successfully opened, false otherwise
-    // In a loop, read all inputs using the input's next() method and store them in sortedData
-    // Keep reading until hasNext() returns false
-    // Then sort the data in sortedData
-    // Remove the top offset rows from the sorted data
     @Override
     public boolean open(){
         logger.trace("Opening PSort");
         /* Write your code here */
-        if (this.input instanceof PRel) {
-            ((PRel)this.input).open();
+        PRel child = (PRel) this.input;
+        if (child.open()) {
 
             // Read all inputs using the input's next() method and store them in sortedData
-            for (int i = 0; ((PRel) this.input).hasNext(); i++) {
-                sortedData.add(((PRel) this.input).next());
+            // for (int i = 0; child.hasNext(); i++) {
+            while (child.hasNext()) {
+                sortedData.add(child.next());
             }
+            // int_fetch = offset instanceof RexLiteral ? ((RexLiteral) offset).getValueAs(Integer.class) : 0;
+            // int_offset = fetch instanceof RexLiteral ? int_offset + ((RexLiteral) fetch).getValueAs(Integer.class) : sortedRows.size();
+            int_offset = offset instanceof RexLiteral ? ((RexLiteral) offset).getValueAs(Integer.class) : 0;
+            int_fetch = fetch instanceof RexLiteral ? int_offset + ((RexLiteral) fetch).getValueAs(Integer.class) : sortedData.size();
 
             final RelCollation sort_collation = this.collation;
             sortedData.sort(new Comparator<Object[]>() {
@@ -78,7 +80,9 @@ public class PSort extends Sort implements PRel{
                     return 0;
                 }
             });
-            sortedData = sortedData.subList(int_offset, int_offset + int_fetch);
+
+            sortedData = sortedData.subList(int_offset, Math.min(int_offset + int_fetch, sortedData.size()));
+            return true;
         }
         return false;
     }

@@ -14,8 +14,11 @@ import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.logical.LogicalSort;
 
 import convention.PConvention;
+import rel.PAggregate;
 import rel.PFilter;
+import rel.PJoin;
 import rel.PProject;
+import rel.PSort;
 import rel.PTableScan;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -123,7 +126,16 @@ public class PRules {
         @Override
         public @Nullable RelNode convert(RelNode relNode) {
             /* Write your code here */
-            return null;
+            final LogicalJoin join = (LogicalJoin) relNode;
+            return new PJoin(
+                    join.getCluster(),
+                    join.getTraitSet().replace(PConvention.INSTANCE),
+                    convert(join.getLeft(), join.getLeft().getTraitSet().replace(PConvention.INSTANCE)),
+                    convert(join.getRight(), join.getRight().getTraitSet().replace(PConvention.INSTANCE)),
+                    join.getCondition(),
+                    join.getVariablesSet(),
+                    join.getJoinType()
+            );
         }
     }
 
@@ -141,7 +153,15 @@ public class PRules {
         @Override
         public @Nullable RelNode convert(RelNode relNode) {
             /* Write your code here */
-            return null;
+            final LogicalAggregate aggregate = (LogicalAggregate) relNode;
+            return new PAggregate(
+                    aggregate.getCluster(),
+                    aggregate.getTraitSet().replace(PConvention.INSTANCE),
+                    aggregate.getHints(),
+                    convert(aggregate.getInput(), aggregate.getInput().getTraitSet().replace(PConvention.INSTANCE)),
+                    aggregate.getGroupSet(),
+                    aggregate.getGroupSets(),
+                    aggregate.getAggCallList());
         }
     }
 
@@ -159,7 +179,16 @@ public class PRules {
         @Override
         public @Nullable RelNode convert(RelNode relNode) {
             /* Write your code here */
-            return null;
+            final LogicalSort sort = (LogicalSort) relNode;
+            return new PSort(
+                    sort.getCluster(),
+                    sort.getTraitSet().replace(PConvention.INSTANCE),
+                    sort.getHints(),
+                    convert(sort.getInput(), sort.getInput().getTraitSet().replace(PConvention.INSTANCE)),
+                    sort.getCollation(),
+                    sort.offset,
+                    sort.fetch
+            );
         }
     }
 }
