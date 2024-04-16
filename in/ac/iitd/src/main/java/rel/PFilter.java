@@ -6,9 +6,6 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rex.RexNode;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.sql.SqlKind;
@@ -16,7 +13,6 @@ import org.apache.calcite.sql.SqlKind;
 import convention.PConvention;
 
 import java.math.BigDecimal;
-import java.util.List;
 import org.apache.calcite.rex.RexLiteral;
 
 
@@ -46,7 +42,7 @@ public class PFilter extends Filter implements PRel {
     @Override
     public boolean open(){
         logger.trace("Opening PFilter");
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         return input.open();
     }
 
@@ -54,7 +50,7 @@ public class PFilter extends Filter implements PRel {
     @Override
     public void close(){
         logger.trace("Closing PFilter");
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         input.close();
     }
 
@@ -63,8 +59,12 @@ public class PFilter extends Filter implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
+        
         String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
-    
+        if (type == "DECIMAL") {
+            operandType = "DECIMAL";
+        }
+
         switch (call.getKind()) {
             case AND:
                 return (Boolean) operand1 && (Boolean) operand2;
@@ -129,7 +129,11 @@ public class PFilter extends Filter implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
+
         String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
+        if (type == "DECIMAL") {
+            operandType = "DECIMAL";
+        }
 
         switch (call.getKind()) {
             case PLUS:
@@ -260,13 +264,22 @@ public class PFilter extends Filter implements PRel {
             return Operation((RexCall) expr, inputRow, type);
         } 
         else if (expr instanceof RexInputRef){
+            if (type.equals("DECIMAL")) {
+                // Type cast whatever value it is to BigDecimal if it is of type DECIMAL
+                Object value = inputRow[((RexInputRef) expr).getIndex()];
+                if (value instanceof Number) {
+                    return BigDecimal.valueOf(((Number) value).doubleValue());
+                } else {
+                    throw new UnsupportedOperationException("Unsupported value type in PProject.handleExpression for DECIMAL");
+                }
+            }
             return inputRow[((RexInputRef) expr).getIndex()];
         }
         else if (expr instanceof RexLiteral){
-            if (type.equals("DECIMAL")){
-                return ((RexLiteral) expr).getValueAs(BigDecimal.class);
+            if (type.equals("DECIMAL")) {
+                return ((RexLiteral) expr).getValueAs(BigDecimal.class); // returns a BigDecimal
             }
-            return ((RexLiteral) expr).getValue();
+            return ((RexLiteral) expr).getValue(); // returns a String
         }
         else {
             throw new UnsupportedOperationException("Unsupported expression type in PProject.handleExpression");
@@ -282,10 +295,10 @@ public class PFilter extends Filter implements PRel {
         // Set the return row while checking if hasNext is true
         // Hint: Use the input row to evaluate the filter condition
 
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         // While checking hasnext itself we'll assingn the returnrow variable and return it in next
         for (Object[] row = input.next(); input.hasNext(); row = input.next()){
-            Object condition = handleExpression(getCondition(), row, "BOOLEAN");
+            Object condition = handleExpression(this.condition, row, "BOOLEAN");
             if ((Boolean) condition){
                 returnRow = row;
                 return true;

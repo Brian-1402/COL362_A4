@@ -45,7 +45,7 @@ public class PProject extends Project implements PRel {
     @Override
     public boolean open() {
         logger.trace("Opening PProject");
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         return input.open();
     }
 
@@ -53,7 +53,7 @@ public class PProject extends Project implements PRel {
     @Override
     public void close(){
         logger.trace("Closing PProject");
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         input.close();
     }
 
@@ -62,7 +62,7 @@ public class PProject extends Project implements PRel {
     public boolean hasNext(){
         logger.trace("Checking if PProject has next");
         // Check if the input has next row
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         return input.hasNext();
     }
 
@@ -72,8 +72,12 @@ public class PProject extends Project implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
+        
         String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
-    
+        if (type == "DECIMAL") {
+            operandType = "DECIMAL";
+        }
+
         switch (call.getKind()) {
             case AND:
                 return (Boolean) operand1 && (Boolean) operand2;
@@ -138,7 +142,11 @@ public class PProject extends Project implements PRel {
     
         Object operand1 = handleExpression(call.getOperands().get(0), inputRow, type);
         Object operand2 = handleExpression(call.getOperands().get(1), inputRow, type);
+
         String operandType = call.getOperands().get(0).getType().getSqlTypeName().getName();
+        if (type == "DECIMAL") {
+            operandType = "DECIMAL";
+        }
 
         switch (call.getKind()) {
             case PLUS:
@@ -269,6 +277,15 @@ public class PProject extends Project implements PRel {
             return Operation((RexCall) expr, inputRow, type);
         } 
         else if (expr instanceof RexInputRef){
+            if (type.equals("DECIMAL")) {
+                // Type cast whatever value it is to BigDecimal if it is of type DECIMAL
+                Object value = inputRow[((RexInputRef) expr).getIndex()];
+                if (value instanceof Number) {
+                    return BigDecimal.valueOf(((Number) value).doubleValue());
+                } else {
+                    throw new UnsupportedOperationException("Unsupported value type in PProject.handleExpression for DECIMAL");
+                }
+            }
             return inputRow[((RexInputRef) expr).getIndex()];
         }
         else if (expr instanceof RexLiteral){
@@ -290,11 +307,11 @@ public class PProject extends Project implements PRel {
         // Get the next row from the input
         // Hint: Use the projects list to evaluate the expressions
         // Note: The output of the project could be a mix of column references, arithmetic operations, etc.
-        PRel input = (PRel) getInput();
+        PRel input = (PRel) this.input;
         Object[] inputRow = input.next();
         Object[] outputRow = new Object[getRowType().getFieldCount()];
-        for (int i = 0; i < getProjects().size(); i++) {
-            outputRow[i] = handleExpression(getProjects().get(i), inputRow, getRowType().getFieldList().get(i).getType().getSqlTypeName().getName());
+        for (int i = 0; i < this.exps.size(); i++) {
+            outputRow[i] = handleExpression(this.exps.get(i), inputRow, this.rowType.getFieldList().get(i).getType().getSqlTypeName().getName());
         }
         return outputRow;
     }
